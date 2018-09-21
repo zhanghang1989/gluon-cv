@@ -109,7 +109,7 @@ class Trainer(object):
         data_kwargs = {'transform': input_transform, 'base_size': args.base_size,
                        'crop_size': args.crop_size}
         trainset = get_segmentation_dataset(
-            args.dataset, split='trainval', mode='train', **data_kwargs)
+            args.dataset, split='train', mode='train', **data_kwargs)
         valset = get_segmentation_dataset(
             args.dataset, split='val', mode='val', **data_kwargs)
         self.train_data = gluon.data.DataLoader(
