@@ -95,11 +95,21 @@ def test_ade_segmentation():
         _ = val[index]
 
 def test_citys_segmentation():
-    if not osp.isdir(osp.expanduser('~/.mxnet/datasets/ade')):
+    if not osp.isdir(osp.expanduser('~/.mxnet/datasets/citys')):
         return
 
     # use valid only, loading training split is very slow
     val = data.CitySegmentation(split='train')
+    name = str(val)
+
+    for _ in range(10):
+        index = np.random.randint(0, len(val))
+        _ = val[index]
+
+def test_kitti_depth():
+    if not osp.isdir(osp.expanduser('~/.mxnet/datasets/kitti')):
+        return
+    val = data.KittiDepth(split='train')
     name = str(val)
 
     for _ in range(10):
