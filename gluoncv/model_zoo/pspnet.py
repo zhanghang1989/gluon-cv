@@ -48,7 +48,7 @@ class PSPNet(SegBaseModel):
         print('self.crop_size', self.crop_size)
 
     def hybrid_forward(self, F, x):
-        c3, c4 = self.base_forward(x)
+        _, _, c3, c4 = self.base_forward(x)
         outputs = []
         x = self.head(c4)
         x = F.contrib.BilinearResize2D(x, **self._up_kwargs)

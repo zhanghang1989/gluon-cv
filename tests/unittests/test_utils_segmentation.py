@@ -22,7 +22,6 @@ def test_segmentation_utils():
         transforms.Normalize([.485, .456, .406], [.229, .224, .225])
     ])
     # get the dataset
-    # TODO FIXME: change it to ADE20K dataset and pretrained model
     dataset = ADE20KSegmentation(split='val')
     # load pretrained net
     net = gluoncv.model_zoo.get_model('fcn_resnet50_ade', pretrained=True, ctx=ctx)

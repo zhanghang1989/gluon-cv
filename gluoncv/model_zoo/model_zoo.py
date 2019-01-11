@@ -8,6 +8,7 @@ from .mask_rcnn import *
 from .fcn import *
 from .pspnet import *
 from .deeplabv3 import *
+from .monodepth import *
 from .cifarresnet import *
 from .cifarresnext import *
 from .cifarwideresnet import *
@@ -124,6 +125,7 @@ _models = {
     'deeplab_resnet152_voc': get_deeplab_resnet152_voc,
     'deeplab_resnet50_ade': get_deeplab_resnet50_ade,
     'deeplab_resnet101_ade': get_deeplab_resnet101_ade,
+    'mono_depth_resnet50_kitti': get_mono_depth_resnet50_kitti,
     'resnet18_v1b': resnet18_v1b,
     'resnet34_v1b': resnet34_v1b,
     'resnet50_v1b': resnet50_v1b,

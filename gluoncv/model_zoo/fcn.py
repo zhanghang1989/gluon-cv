@@ -51,7 +51,7 @@ class FCN(SegBaseModel):
                 self.auxlayer.collect_params().setattr('lr_mult', 10)
 
     def hybrid_forward(self, F, x):
-        c3, c4 = self.base_forward(x)
+        _, _, c3, c4 = self.base_forward(x)
 
         outputs = []
         x = self.head(c4)

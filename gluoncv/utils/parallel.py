@@ -6,7 +6,7 @@ from mxnet import autograd
 from mxnet.ndarray import NDArray
 from mxnet.gluon.utils import split_and_load
 
-__all__ = ['DataParallelModel', 'DataParallelCriterion', 'parallel_backward']
+__all__ = ['DataParallelModel', 'DataParallelCriterion', 'split_load_kwargs']
 
 class DataParallelModel(object):
     """Data parallelism
@@ -238,17 +238,3 @@ def criterion_parallel_apply(module, inputs, targets, kwargs_tup=None, sync=Fals
         outputs = [module(*(input + target), **kwargs) \
             for (input, target, kwargs) in zip(inputs, targets, kwargs_tup)]
         return tuple(outputs)
-
-def parallel_backward(losses, sync=True):
-    """Parallel Backward for CustomOp"""
-    def _worker(loss):
-        autograd.backward(loss)
-    threads = [threading.Thread(target=_worker, args=(loss,)) for loss in losses]
-    if sync:
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
-    else:
-        for loss in losses:
-            loss.backward()

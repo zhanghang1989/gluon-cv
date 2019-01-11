@@ -193,7 +193,13 @@ def test_segmentation_models():
     _test_model_list(models, ctx, x, pretrained=True, pretrained_base=True)
     _test_model_list(models, ctx, x, pretrained=False, pretrained_base=False)
     _test_model_list(models, ctx, x, pretrained=False, pretrained_base=True)
-    
+
+@try_gpu(0)
+def test_depth_models():
+    ctx = mx.context.current_context()
+    x = mx.random.uniform(shape=(4, 3, 256, 512), ctx=ctx)
+    models = ['mono_depth_resnet50_kitti']
+    _test_model_list(models, ctx, x, pretrained=True, pretrained_base=True)
     
 def test_mobilenet_sync_bn():
     model_name = "mobilenet1.0"

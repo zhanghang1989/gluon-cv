@@ -36,17 +36,18 @@ class SegBaseModel(HybridBlock):
     """
     # pylint : disable=arguments-differ
     def __init__(self, nclass, aux, backbone='resnet50', height=None, width=None,
-                 base_size=520, crop_size=480, pretrained_base=True, **kwargs):
+                 base_size=520, crop_size=480, pretrained_base=True, dilated=True,
+                 **kwargs):
         super(SegBaseModel, self).__init__()
         self.aux = aux
         self.nclass = nclass
         with self.name_scope():
             if backbone == 'resnet50':
-                pretrained = resnet50_v1s(pretrained=pretrained_base, dilated=True, **kwargs)
+                pretrained = resnet50_v1s(pretrained=pretrained_base, dilated=dilated, **kwargs)
             elif backbone == 'resnet101':
-                pretrained = resnet101_v1s(pretrained=pretrained_base, dilated=True, **kwargs)
+                pretrained = resnet101_v1s(pretrained=pretrained_base, dilated=dilated, **kwargs)
             elif backbone == 'resnet152':
-                pretrained = resnet152_v1s(pretrained=pretrained_base, dilated=True, **kwargs)
+                pretrained = resnet152_v1s(pretrained=pretrained_base, dilated=dilated, **kwargs)
             else:
                 raise RuntimeError('unknown backbone: {}'.format(backbone))
             self.conv1 = pretrained.conv1
@@ -69,11 +70,11 @@ class SegBaseModel(HybridBlock):
         x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
-        x = self.layer1(x)
-        x = self.layer2(x)
-        c3 = self.layer3(x)
+        c1 = self.layer1(x)
+        c2 = self.layer2(c1)
+        c3 = self.layer3(c2)
         c4 = self.layer4(c3)
-        return c3, c4
+        return c1, c2, c3, c4
 
     def evaluate(self, x):
         """evaluating network with inputs and targets"""
