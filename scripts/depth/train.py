@@ -135,8 +135,8 @@ class Trainer(object):
         # save every epoch
         save_checkpoint(self.net.module, self.args, False)
 
+    """
     def validation(self, epoch):
-        #total_inter, total_union, total_correct, total_label = 0, 0, 0, 0
         self.metric.reset()
         tbar = tqdm(self.eval_data)
         for i, (left, right) in enumerate(tbar):
@@ -149,6 +149,7 @@ class Trainer(object):
             tbar.set_description('Epoch %d, validation pixAcc: %.3f, mIoU: %.3f'%\
                 (epoch, pixAcc, mIoU))
             mx.nd.waitall()
+    """
 
 
 def save_checkpoint(net, args, is_best=False):
@@ -168,11 +169,11 @@ if __name__ == "__main__":
     trainer = Trainer(args)
     if args.eval:
         print('Evaluating model: ', args.resume)
-        trainer.validation(args.start_epoch)
+        #trainer.validation(args.start_epoch)
     else:
         print('Starting Epoch:', args.start_epoch)
         print('Total Epoches:', args.epochs)
         for epoch in range(args.start_epoch, args.epochs):
             trainer.training(epoch)
-            if not trainer.args.no_val:
-                trainer.validation(epoch)
+            #if not trainer.args.no_val:
+            #    trainer.validation(epoch)
