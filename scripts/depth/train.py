@@ -1,7 +1,11 @@
 import argparse
+from tqdm import tqdm
 import mxnet as mx
 from mxnet.gluon.data.vision import transforms
+from gluoncv.utils.depth import MonodepthLoss
+from gluoncv.utils import LRScheduler
 from gluoncv.data import KittiDepth
+from gluoncv.utils.parallel import *
 from gluoncv.model_zoo import get_model
 
 def parse_args():
@@ -27,11 +31,15 @@ def parse_args():
                         help='number of total epochs to run')
     parser.add_argument('--lr', type=float, default=1e-3, metavar='LR',
                         help='learning rate (default: 1e-3)')
-    parser.add_argument('--batch-size', default=256,
+    parser.add_argument('--batch-size', default=16,
                         help='mini-batch size (default: 256)')
     parser.add_argument('--test-batch-size', type=int, default=16,
                         metavar='N', help='input batch size for \
                         testing (default: 32)')
+    parser.add_argument('--start_epoch', type=int, default=0,
+                        metavar='N', help='start epochs (default:0)')
+    parser.add_argument('--eval', action='store_true', default= False,
+                        help='evaluation only')
     # data
     parser.add_argument('--height', type=int, default=256,
                         help='image size')
@@ -41,6 +49,8 @@ def parse_args():
                         metavar='N', help='dataloader threads')
     parser.add_argument('--dtype', type=str, default='float32',
                         help='data type for training. default is float32')
+    parser.add_argument('--train-split', type=str, default='train',
+                        help='dataset train split (default: train)')
     # cuda and logging
     parser.add_argument('--no-cuda', action='store_true', default=
                         False, help='disables CUDA training')
@@ -93,38 +103,41 @@ class Trainer(object):
         data_kwargs = {'transform': input_transform, 'height': args.height,
                        'width': args.width}
         trainset = KittiDepth(split=args.train_split, mode='train', **data_kwargs)
-        valset = KittiDepth(split='val', mode='val', **data_kwargs)
-        self.train_data = gluon.data.DataLoader(
+        #valset = KittiDepth(split='val', mode='val', **data_kwargs)
+        print('len(trainset):', len(trainset))
+        self.train_data = mx.gluon.data.DataLoader(
             trainset, args.batch_size, shuffle=True, last_batch='rollover',
             num_workers=args.workers)
-        self.val_data = gluon.data.DataLoader(valset, args.test_batch_size,
-            last_batch='rollover', num_workers=args.workers)
+        #self.val_data = mx.gluon.data.DataLoader(valset, args.test_batch_size,
+        #    last_batch='rollover', num_workers=args.workers)
 
         # criterion
-        criterion = MonodepthLoss(3, args.ssim_weight, args.smooth_weigth, args.lr_weight)
+        criterion = MonodepthLoss(3, args.ssim_weight, args.smooth_weight, args.lr_weight)
         self.criterion = DataParallelCriterion(criterion, args.ctx, args.syncbn)
 
-        # optimizer
+        # optimizer and lr scheduling
+        self.lr_scheduler = LRScheduler(mode='poly', baselr=args.lr,
+                                        niters=len(self.train_data), 
+                                        nepochs=args.epochs)
         kv = mx.kv.create(args.kvstore)
         optimizer_params = {'lr_scheduler': self.lr_scheduler}
         if args.dtype == 'float16':
             optimizer_params['multi_precision'] = True
 
-        self.optimizer = gluon.Trainer(self.net.module.collect_params(), 'adam',
+        self.optimizer = mx.gluon.Trainer(self.net.module.collect_params(), 'adam',
                                        optimizer_params, kvstore = kv)
 
-    def train(self):
+    def train(self, epoch):
         tbar = tqdm(self.train_data)
         train_loss = 0.0
         alpha = 0.2
         for i, (left, right) in enumerate(tbar):
             self.lr_scheduler.update(i, epoch)
-            with autograd.record(True):
+            with mx.autograd.record(True):
                 outputs = self.net(left.astype(args.dtype, copy=False))
-                target = (left, right)
-                losses = self.criterion(outputs, target)
+                losses = self.criterion(outputs, left, right)
                 mx.nd.waitall()
-                autograd.backward(losses)
+                mx.autograd.backward(losses)
             self.optimizer.step(self.args.batch_size)
             for loss in losses:
                 train_loss += loss.asnumpy()[0] / len(losses)
@@ -152,7 +165,7 @@ class Trainer(object):
     """
 
 
-def save_checkpoint(net, args, is_best=False):
+def save_checkpoint(net, args):
     """Save Checkpoint"""
     directory = "runs/%s/%s/%s/" % (args.dataset, args.model, args.checkname)
     if not os.path.exists(directory):
@@ -160,8 +173,6 @@ def save_checkpoint(net, args, is_best=False):
     filename='checkpoint.params'
     filename = directory + filename
     net.save_parameters(filename)
-    if is_best:
-        shutil.copyfile(filename, directory + 'model_best.params')
 
 
 if __name__ == "__main__":
@@ -174,6 +185,6 @@ if __name__ == "__main__":
         print('Starting Epoch:', args.start_epoch)
         print('Total Epoches:', args.epochs)
         for epoch in range(args.start_epoch, args.epochs):
-            trainer.training(epoch)
+            trainer.train(epoch)
             #if not trainer.args.no_val:
             #    trainer.validation(epoch)

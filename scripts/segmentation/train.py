@@ -187,7 +187,6 @@ class Trainer(object):
         save_checkpoint(self.net.module, self.args, False)
 
     def validation(self, epoch):
-        #total_inter, total_union, total_correct, total_label = 0, 0, 0, 0
         self.metric.reset()
         tbar = tqdm(self.eval_data)
         for i, (data, target) in enumerate(tbar):

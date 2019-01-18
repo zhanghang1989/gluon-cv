@@ -38,10 +38,6 @@ class MonodepthLoss(gluon.loss.Loss):
         disp_left_est = [d[:, 0, :, :].expand_dims(1) for d in prediction]
         disp_right_est = [d[:, 1, :, :].expand_dims(1) for d in prediction]
 
-        for righty in right_pyramid:
-            print('righty.shape', righty.shape)
-        for displ in disp_left_est:
-            print('displ.shape', displ.shape)
         # Generate images
         left_est = [generate_image_left(right_pyramid[i],
                     disp_left_est[i]) for i in range(self.nscales)]
@@ -137,18 +133,14 @@ def apply_disparity(img, disp):
     batch_size, _, height, width = img.shape
 
     # Original coordinates of pixels
-    x_base = mx.nd.array(np.linspace(0, 1, height)).repeat(batch_size*width). \
+    x_base = mx.nd.array(np.linspace(0, 1, height), ctx=img.context).repeat(batch_size*width). \
             reshape(batch_size, width, height).swapaxes(1, 2)
-    y_base = mx.nd.array(np.linspace(0, 1, width)).repeat(batch_size*height). \
+    y_base = mx.nd.array(np.linspace(0, 1, width), ctx=img.context).repeat(batch_size*height). \
             reshape(batch_size, height, width)
-    #print('x_base', x_base)
-    #print('y_base', y_base)
-
     # Apply shift in X direction
     # Disparity is passed in NCHW format with 1 channel
     x_shifts = disp[:, 0, :, :]
     flow_field = F.stack(x_base+x_shifts, y_base, axis=1)
-    #print('flow_field', flow_field)
     # BilinearSampler assumes the coordinates between -1 and 1
     output = F.BilinearSampler(img, 2*flow_field - 1)
     return output

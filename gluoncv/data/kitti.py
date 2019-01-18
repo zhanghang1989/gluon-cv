@@ -1,5 +1,6 @@
 """Kitti Dataloader"""
 import os
+import random
 import numpy as np
 from PIL import Image
 
@@ -30,7 +31,8 @@ class KittiDepth(dataset.Dataset):
         else:
             assert self.mode == 'testval'
         if self.transform:
-            left_image, right_image = self.transform(left_image, right_image)
+            left_image = self.transform(left_image)
+            right_image = self.transform(right_image)
         return left_image, right_image
 
     def __len__(self):
@@ -60,7 +62,7 @@ class KittiDepth(dataset.Dataset):
         return left_image, right_image
 
     def image_transform(self, left_image):
-        return F.array(np.array(left_image), cpu(0))
+        return mx.nd.array(np.array(left_image), mx.cpu(0))
 
 def find_all_pairs(folder):
     asubfolders = get_direct_subfolders(folder)
