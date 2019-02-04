@@ -1,3 +1,4 @@
+import os
 import argparse
 from tqdm import tqdm
 import mxnet as mx
@@ -51,6 +52,8 @@ def parse_args():
                         help='data type for training. default is float32')
     parser.add_argument('--train-split', type=str, default='train',
                         help='dataset train split (default: train)')
+    parser.add_argument('--dataset', type=str, default='pascalaug',
+                        help='dataset name (default: pascal)')
     # cuda and logging
     parser.add_argument('--no-cuda', action='store_true', default=
                         False, help='disables CUDA training')
@@ -146,7 +149,7 @@ class Trainer(object):
             mx.nd.waitall()
 
         # save every epoch
-        save_checkpoint(self.net.module, self.args, False)
+        save_checkpoint(self.net.module, self.args)
 
     """
     def validation(self, epoch):
