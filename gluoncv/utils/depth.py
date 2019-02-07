@@ -99,9 +99,7 @@ class MonodepthLoss(gluon.loss.Loss):
 
 def scale_pyramid(img, num_scales):
     scaled_imgs = [img]
-    s = img.shape
-    h = s[2]
-    w = s[3]
+    _, _, h, w = img.shape
     for i in range(num_scales - 1):
         ratio = 2 ** (i + 1)
         nh = h // ratio
