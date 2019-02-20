@@ -136,6 +136,45 @@ def test_ssd_models():
         models = ['ssd_512_resnet50_v1_voc']
     _test_model_list(models, ctx, x)
 
+def test_ssd_reset_class():
+    ctx = mx.context.current_context()
+    x = mx.random.uniform(shape=(1, 3, 512, 544), ctx=ctx)  # allow non-squre and larger inputs
+    model_name = 'ssd_300_vgg16_atrous_voc'
+    net = gcv.model_zoo.get_model(model_name, pretrained=True, ctx=ctx)
+    net.reset_class(["bus", "car", "bird"])
+    net(x)
+
+# This test is only executed when a gpu is available
+def test_ssd_reset_class_on_gpu():
+    ctx = mx.gpu(0)
+    try:
+        x = mx.random.uniform(shape=(1, 3, 512, 544), ctx=ctx)
+    except Exception:
+        return
+
+    model_name = 'ssd_300_vgg16_atrous_voc'
+    net = gcv.model_zoo.get_model(model_name, pretrained=True, ctx=ctx)
+    net.reset_class(["bus", "car", "bird"])
+    net(x)
+
+def test_yolo3_reset_class():
+    ctx = mx.context.current_context()
+    x = mx.random.uniform(shape=(1, 3, 512, 544), ctx=ctx)  # allow non-squre and larger inputs
+    model_name = 'yolo3_darknet53_voc'
+    net = gcv.model_zoo.get_model(model_name, pretrained=True, ctx=ctx)
+    net.reset_class(["bus", "car", "bird"])
+    net(x)
+
+    # for GPU
+    ctx = mx.gpu(0)
+    try:
+        x = mx.random.uniform(shape=(1, 3, 512, 544), ctx=ctx)
+    except Exception:
+        return
+    net = gcv.model_zoo.get_model(model_name, pretrained=True, ctx=ctx)
+    net.reset_class(["bus", "car", "bird"])
+    net(x)
+
 @try_gpu(0)
 def test_faster_rcnn_models():
     ctx = mx.context.current_context()
@@ -184,7 +223,7 @@ def test_set_nms():
 @try_gpu(0)
 def test_segmentation_models():
     ctx = mx.context.current_context()
-    x = mx.random.uniform(shape=(1, 3, 224, 224), ctx=ctx)
+    x = mx.random.uniform(shape=(1, 3, 480, 480), ctx=ctx)
     models = ['fcn_resnet101_coco', 'psp_resnet101_coco', 'deeplab_resnet101_coco',
               'fcn_resnet101_voc', 'psp_resnet101_voc', 'deeplab_resnet101_voc',
               'fcn_resnet50_ade', 'psp_resnet50_ade', 'deeplab_resnet50_ade',
@@ -205,9 +244,10 @@ def test_mobilenet_sync_bn():
     model_name = "mobilenet1.0"
     net = gcv.model_zoo.get_model(model_name, pretrained=True)
     net.save_parameters(model_name + '.params')
-    net = gcv.model_zoo.get_model(model_name, pretrained=False, num_sync_bn_devices=2)
+    net = gcv.model_zoo.get_model(model_name, pretrained=False,
+                                  norm_layer=mx.gluon.contrib.nn.SyncBatchNorm, norm_kwargs={'num_devices': 2})
     net.load_parameters(model_name + '.params')
- 
+
 
 if __name__ == '__main__':
     import nose
