@@ -71,24 +71,23 @@ class MonoDepth(SegBaseModel):
 
         feat = c4
         disps = []
+        #upfeats = []
         for i in range(len(skips)):
             skip = skips[i]
             upfeat = self.upconvs[i](feat)
             featcat = [upfeat, skip] if skip is not None else [upfeat]
             if len(disps) > 0:
                 featcat.append(F.contrib.BilinearResize2D(disps[-1], scale_height=2, scale_width=2))
-            #print('i=',i)
-            #for fi in featcat:
-            #    print('fi.shape: ', fi.shape)
             cated = F.concat(*featcat, dim=1)
             feat = self.connects[i](cated)
+            #upfeats.append(feat)
             if i > 0:
                 disps.append(self.disps[i-1](feat))
-                #print('feat.shape', feat.shape)
-                #print('disps[-1].shape:', disps[-1].shape)
-        #print('final feat.shape', feat.shape)
         disps.reverse()
+        #upfeats.reverse()
+        #return tuple(upfeats)
         return tuple(disps)
+        #return c1, c2, c3, c4
 
 class _ConvBnAct(HybridBlock):
     def __init__(self, in_channels, out_channels, kernel_size=3, stride=1,
@@ -105,13 +104,10 @@ class _UpConv(HybridBlock):
     def __init__(self, in_channels, out_channels, kernel_size,# height, width,
                  norm_layer=nn.BatchNorm, norm_kwargs={}):
         super(_UpConv, self).__init__()
-        #self.height = height
-        #self.width = width
         self.conv1 = _ConvBnAct(in_channels, out_channels, kernel_size, 1,
                                 norm_layer=norm_layer, norm_kwargs=norm_kwargs)
 
     def hybrid_forward(self, F, x):
-    #def forward(self, x):
         x = F.contrib.BilinearResize2D(self.conv1(x), scale_height=2, scale_width=2)
         return x
 
@@ -126,11 +122,13 @@ class _DepthHead(HybridBlock):
                                          kernel_size=3, padding=1, use_bias=False))
                 self.block.add(norm_layer(in_channels=inter_channels, **norm_kwargs))
                 self.block.add(nn.Activation('sigmoid'))
+                #self.block.add(nn.Activation('relu'))
                 self.block.add(nn.Dropout(0.1))
                 self.block.add(nn.Conv2D(in_channels=inter_channels, channels=channels,
                                          kernel_size=1))
 
     def hybrid_forward(self, F, x):
+        #print('mxnet x:', x)
         return self.block(x)
 
 def get_mono_depth(dataset='kitti', backbone='resnet50', pretrained=False,

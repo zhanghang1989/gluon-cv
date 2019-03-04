@@ -31,8 +31,8 @@ def parse_args():
     parser.add_argument('--epochs', default=50,
                         help='number of total epochs to run')
     parser.add_argument('--lr', type=float, default=1e-3, metavar='LR',
-                        help='learning rate (default: 1e-3)')
-    parser.add_argument('--batch-size', default=16,
+                        help='learning rate (default: 1e-4)')
+    parser.add_argument('--batch-size', type=int, default=16,
                         help='mini-batch size (default: 256)')
     parser.add_argument('--test-batch-size', type=int, default=16,
                         metavar='N', help='input batch size for \
@@ -52,8 +52,8 @@ def parse_args():
                         help='data type for training. default is float32')
     parser.add_argument('--train-split', type=str, default='train',
                         help='dataset train split (default: train)')
-    parser.add_argument('--dataset', type=str, default='pascalaug',
-                        help='dataset name (default: pascal)')
+    #parser.add_argument('--dataset', type=str, default='kitti',
+    #                    help='dataset name (default: kitti)')
     # cuda and logging
     parser.add_argument('--no-cuda', action='store_true', default=
                         False, help='disables CUDA training')
@@ -115,7 +115,7 @@ class Trainer(object):
         #    last_batch='rollover', num_workers=args.workers)
 
         # criterion
-        criterion = MonodepthLoss(3, args.ssim_weight, args.smooth_weight, args.lr_weight)
+        criterion = MonodepthLoss(4, args.ssim_weight, args.smooth_weight, args.lr_weight)
         self.criterion = DataParallelCriterion(criterion, args.ctx, args.syncbn)
 
         # optimizer and lr scheduling
@@ -161,7 +161,6 @@ class Trainer(object):
             outputs = [x[0] for x in outputs]
             targets = mx.gluon.utils.split_and_load(target, args.ctx, even_split=False)
             self.metric.update(targets, outputs)
-            pixAcc, mIoU = self.metric.get()
             tbar.set_description('Epoch %d, validation pixAcc: %.3f, mIoU: %.3f'%\
                 (epoch, pixAcc, mIoU))
             mx.nd.waitall()
@@ -170,7 +169,7 @@ class Trainer(object):
 
 def save_checkpoint(net, args):
     """Save Checkpoint"""
-    directory = "runs/%s/%s/%s/" % (args.dataset, args.model, args.checkname)
+    directory = "runs/%s/%s/" % (args.model, args.checkname)
     if not os.path.exists(directory):
         os.makedirs(directory)
     filename='checkpoint.params'

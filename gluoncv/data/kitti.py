@@ -13,8 +13,7 @@ class KittiDepth(dataset.Dataset):
     """
     def __init__(self, root=os.path.expanduser('~/.mxnet/datasets/kitti'), split='train',
                  mode=None, transform=None, height=256, width=512, **kwargs):
-        # TODO FIXME, seperate train/val sets
-        self.left_paths, self.right_paths = find_all_pairs(root)
+        self.left_paths, self.right_paths = find_all_pairs(os.path.join(root, split))
         assert len(self.left_paths) == len(self.right_paths)
         self.transform = transform
         self.height = height
@@ -23,6 +22,13 @@ class KittiDepth(dataset.Dataset):
 
     def __getitem__(self, idx):
         left_image = Image.open(self.left_paths[idx])
+        if self.mode == 'test':
+            ow, oh = self.width, self.height
+            left_image = left_image.resize((ow, oh), Image.BILINEAR)
+            left_image = self.image_transform(left_image)
+            if self.transform:
+                left_image = self.transform(left_image)
+            return left_image, os.path.basename(self.left_paths[idx])
         right_image = Image.open(self.right_paths[idx])
         if self.mode == 'train':
             left_image, right_image = self._sync_transform(left_image, right_image)
@@ -65,6 +71,7 @@ class KittiDepth(dataset.Dataset):
         return mx.nd.array(np.array(left_image), mx.cpu(0))
 
 def find_all_pairs(folder):
+    # folder = '~/data/kitti/'
     asubfolders = get_direct_subfolders(folder)
     left_paths = []
     right_paths = []

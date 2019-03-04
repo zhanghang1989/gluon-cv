@@ -3,12 +3,15 @@
 """
 from __future__ import absolute_import
 import numpy as np
+
 import mxnet as mx
 from mxnet import gluon
 from mxnet import nd
 from mxnet.gluon.loss import Loss, _apply_weighting, _reshape_like
 import mxnet.ndarray as F
 import mxnet.gluon.nn as nn
+
+__all__ = ['MonodepthLoss']
 
 # adapted from https://github.com/ClubAI/MonoDepth-PyTorch/blob/master/utils.py
 class MonodepthLoss(gluon.loss.Loss):
