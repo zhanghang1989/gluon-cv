@@ -28,7 +28,7 @@ def parse_args():
                         help='using Synchronized Cross-GPU BatchNorm')
 
     # training
-    parser.add_argument('--epochs', default=50,
+    parser.add_argument('--epochs', type=int, default=50,
                         help='number of total epochs to run')
     parser.add_argument('--lr', type=float, default=1e-3, metavar='LR',
                         help='learning rate (default: 1e-4)')
