@@ -151,22 +151,6 @@ class Trainer(object):
         # save every epoch
         save_checkpoint(self.net.module, self.args)
 
-    """
-    def validation(self, epoch):
-        self.metric.reset()
-        tbar = tqdm(self.eval_data)
-        for i, (left, right) in enumerate(tbar):
-            outputs = self.evaluator(left.astype(args.dtype, copy=False))
-            target = (left, right)
-            outputs = [x[0] for x in outputs]
-            targets = mx.gluon.utils.split_and_load(target, args.ctx, even_split=False)
-            self.metric.update(targets, outputs)
-            tbar.set_description('Epoch %d, validation pixAcc: %.3f, mIoU: %.3f'%\
-                (epoch, pixAcc, mIoU))
-            mx.nd.waitall()
-    """
-
-
 def save_checkpoint(net, args):
     """Save Checkpoint"""
     directory = "runs/%s/%s/" % (args.model, args.checkname)
