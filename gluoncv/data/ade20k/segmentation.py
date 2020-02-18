@@ -145,24 +145,55 @@ class ADE20KSegmentation(SegmentationDataset):
         return 1
 
 def _get_ade20k_pairs(folder, mode='train'):
+    def get_path_pairs(img_folder, mask_folder):
+        img_paths = []
+        mask_paths = []
+        for filename in os.listdir(img_folder):
+            basename, _ = os.path.splitext(filename)
+            if filename.endswith(".jpg"):
+                imgpath = os.path.join(img_folder, filename)
+                maskname = basename + '.png'
+                maskpath = os.path.join(mask_folder, maskname)
+                if os.path.isfile(maskpath):
+                    img_paths.append(imgpath)
+                    mask_paths.append(maskpath)
+                else:
+                    print('cannot find the mask:', maskpath)
+        return img_paths, mask_paths
+
     img_paths = []
     mask_paths = []
     if mode == 'train':
         img_folder = os.path.join(folder, 'images/training')
         mask_folder = os.path.join(folder, 'annotations/training')
-    else:
+        img_paths, mask_paths = get_path_pairs(img_folder, mask_folder)
+        assert len(img_paths) == 20210
+    elif mode == 'val':
         img_folder = os.path.join(folder, 'images/validation')
         mask_folder = os.path.join(folder, 'annotations/validation')
-    for filename in os.listdir(img_folder):
-        basename, _ = os.path.splitext(filename)
-        if filename.endswith(".jpg"):
-            imgpath = os.path.join(img_folder, filename)
-            maskname = basename + '.png'
-            maskpath = os.path.join(mask_folder, maskname)
-            if os.path.isfile(maskpath):
-                img_paths.append(imgpath)
-                mask_paths.append(maskpath)
-            else:
-                print('cannot find the mask:', maskpath)
+        img_paths, mask_paths = get_path_pairs(img_folder, mask_folder)
+        assert len(img_paths) == 2000
+    else:
+        assert mode == 'trainval'
+        train_img_folder = os.path.join(folder, 'images/training')
+        train_mask_folder = os.path.join(folder, 'annotations/training')
+        val_img_folder = os.path.join(folder, 'images/validation')
+        val_mask_folder = os.path.join(folder, 'annotations/validation')
+        train_img_paths, train_mask_paths = get_path_pairs(train_img_folder, train_mask_folder)
+        val_img_paths, val_mask_paths = get_path_pairs(val_img_folder, val_mask_folder)
+        img_paths = train_img_paths + val_img_paths
+        mask_paths = train_mask_paths + val_mask_paths
+        assert len(img_paths) == 22210
+    #for filename in os.listdir(img_folder):
+    #    basename, _ = os.path.splitext(filename)
+    #    if filename.endswith(".jpg"):
+    #        imgpath = os.path.join(img_folder, filename)
+    #        maskname = basename + '.png'
+    #        maskpath = os.path.join(mask_folder, maskname)
+    #        if os.path.isfile(maskpath):
+    #            img_paths.append(imgpath)
+    #            mask_paths.append(maskpath)
+    #        else:
+    #            print('cannot find the mask:', maskpath)
 
     return img_paths, mask_paths

@@ -1,15 +1,16 @@
 name: gluon_vision_docs
 dependencies:
-- python
+- python=3.7
 - sphinx>=1.5.5
 - scipy
 - numpy
 - matplotlib
 - sphinx_rtd_theme
+- pip=19.1.1
 - pip:
   - https://github.com/mli/mx-theme/tarball/0.3.1
   - sphinx-gallery
-  - mxnet-cu92mkl==1.6.0b20190910
+  - mxnet-cu100mkl==1.6.0b20191010
   # - guzzle_sphinx_theme
   - recommonmark
   - Image
@@ -19,3 +20,6 @@ dependencies:
   - Pillow
   - opencv-python
   - portalocker
+  - decord
+  - cython
+  - pycocotools
