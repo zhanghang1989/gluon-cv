@@ -99,7 +99,10 @@ class ADE20KSegmentation(SegmentationDataset):
     def __init__(self, root=os.path.expanduser('~/.mxnet/datasets/ade'),
                  split='train', mode=None, transform=None, **kwargs):
         super(ADE20KSegmentation, self).__init__(root, split, mode, transform, **kwargs)
-        root = os.path.join(root, self.BASE_DIR)
+        if split == 'test':
+            root = os.path.join(root, 'release_test')
+        else:
+            root = os.path.join(root, self.BASE_DIR)
         assert os.path.exists(root), "Please setup the dataset using" + \
             "scripts/datasets/ade20k.py"
         self.images, self.masks = _get_ade20k_pairs(root, split)
@@ -145,7 +148,7 @@ class ADE20KSegmentation(SegmentationDataset):
         return 1
 
 def _get_ade20k_pairs(folder, mode='train'):
-    def get_path_pairs(img_folder, mask_folder):
+    def get_path_pairs(img_folder, mask_folder, mode='train'):
         img_paths = []
         mask_paths = []
         for filename in os.listdir(img_folder):
@@ -154,10 +157,10 @@ def _get_ade20k_pairs(folder, mode='train'):
                 imgpath = os.path.join(img_folder, filename)
                 maskname = basename + '.png'
                 maskpath = os.path.join(mask_folder, maskname)
-                if os.path.isfile(maskpath):
+                if os.path.isfile(maskpath) or mode=='test':
                     img_paths.append(imgpath)
                     mask_paths.append(maskpath)
-                else:
+                elif mode != 'test':
                     print('cannot find the mask:', maskpath)
         return img_paths, mask_paths
 
@@ -173,6 +176,11 @@ def _get_ade20k_pairs(folder, mode='train'):
         mask_folder = os.path.join(folder, 'annotations/validation')
         img_paths, mask_paths = get_path_pairs(img_folder, mask_folder)
         assert len(img_paths) == 2000
+    elif mode == 'test':
+        img_folder = os.path.join(folder, 'testing')
+        mask_folder = os.path.join(folder, 'testing')
+        img_paths, mask_paths = get_path_pairs(img_folder, mask_folder, mode='test')
+        assert len(img_paths) == 3352
     else:
         assert mode == 'trainval'
         train_img_folder = os.path.join(folder, 'images/training')
@@ -184,16 +192,5 @@ def _get_ade20k_pairs(folder, mode='train'):
         img_paths = train_img_paths + val_img_paths
         mask_paths = train_mask_paths + val_mask_paths
         assert len(img_paths) == 22210
-    #for filename in os.listdir(img_folder):
-    #    basename, _ = os.path.splitext(filename)
-    #    if filename.endswith(".jpg"):
-    #        imgpath = os.path.join(img_folder, filename)
-    #        maskname = basename + '.png'
-    #        maskpath = os.path.join(mask_folder, maskname)
-    #        if os.path.isfile(maskpath):
-    #            img_paths.append(imgpath)
-    #            mask_paths.append(maskpath)
-    #        else:
-    #            print('cannot find the mask:', maskpath)
 
     return img_paths, mask_paths
